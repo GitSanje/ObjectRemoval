@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import AppContextProvider from "@/components/hooks/context";
+import Link from "next/link";
+import { GithubIcon } from "lucide-react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,11 +27,40 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+         <AppContextProvider>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+          <header className="border-b">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold"> Remove defects</h1>
+            <p className="text-sm text-muted-foreground"> Powered by AI</p>
+          </div>
+          <nav className="flex items-center gap-6">
+            <Link href="#" className="text-sm hover:text-primary">
+              Home
+            </Link>
+           
+            <Link href="#" className="text-sm hover:text-primary">
+              Blog
+            </Link>
+            <Link href="#" className="text-sm hover:text-primary">
+              Paper
+            </Link>
+            <Link href="#" className="hover:text-primary">
+              <GithubIcon className="h-5 w-5" />
+            </Link>
+          </nav>
+        </div>
+      </header> 
+     
+
+       
         {children}
+        
       </body>
+      </AppContextProvider>
     </html>
   );
 }
