@@ -4,18 +4,19 @@ import * as _ from "underscore";
 import Tool from "./Tool";
 import { modelInputProps } from "./helpers/Interfaces";
 import AppContext from "./hooks/createContext";
-
+// @ts-ignore
+import __ from "lodash";
 const Stage = () => {
     const {
-        clicks: [, setClicks],
+        clicks: [clicks, setClicks],
         image: [image],
       } = useContext(AppContext)!;
 
       
-  const getClick = (x: number, y: number): modelInputProps => {
-    const clickType = 1;
-    return { x, y, clickType };
-  };
+      const getClick = (x: number, y: number): modelInputProps => {
+        const clickType = 1;
+        return { x, y, clickType };
+      };
 
    // Get mouse position and scale the (x, y) coordinates back to the natural
    // scale of the image. Update the state of clicks with setClicks to trigger
@@ -26,18 +27,25 @@ const Stage = () => {
           const rect = el.getBoundingClientRect();
           let x = e.clientX - rect.left;
       let y = e.clientY - rect.top;
+      
       const imageScale = image ? image.width / el.offsetWidth : 1;
       x *= imageScale;
       y *= imageScale;
+
       const click = getClick(x, y);
+   
+      
       if (click) setClicks([click]);
       },15)
+
+
+     
 
      const flexCenterClasses = "flex items-center justify-center";
      return (
        <div className={`${flexCenterClasses} w-full h-full`}>
          <div className={`${flexCenterClasses} relative w-[90%] h-[90%]`}>
-           <Tool handleMouseMove={handleMouseMove} />
+           <Tool handleMouseMove={handleMouseMove}  />
          </div>
        </div>
      )

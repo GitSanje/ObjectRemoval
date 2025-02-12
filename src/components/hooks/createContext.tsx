@@ -16,6 +16,8 @@ interface contextProps {
       maskImg: HTMLImageElement | null,
       setMaskImg: (e: HTMLImageElement | null) => void
     ];
+    isremove: [isremove : boolean,
+      setIsremove: (isremove:boolean) => void];
   }
   
   

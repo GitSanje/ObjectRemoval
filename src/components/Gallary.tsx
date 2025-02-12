@@ -1,3 +1,4 @@
+import Link from "next/link";
 import React from "react";
 
 interface GalleryProps {
@@ -16,13 +17,18 @@ const Gallery: React.FC<GalleryProps> = ({ files }) => {
     
 
       {files.map((file, index) => (
-        <div key={index} className="relative overflow-hidden rounded-lg shadow-md">
-          <img
-            src={`/data/images/${file}`} 
-            alt={`Uploaded ${index}`}
-            className="w-full h-full object-cover rounded-lg hover:scale-105 transition-transform duration-300"
-          />
+        <Link href={`/mask_create?fname=${file}`} key={index}>
+        <div key={index} className="relative overflow-hidden rounded-lg shadow-md" >
+          
+          { (['jpg', 'png', 'jpeg'].includes(file.split('.')[1])) ?
+            <img
+              src={`/data/images/${file}`} 
+              alt={`Uploaded ${index}`}
+              className="w-full h-full object-cover rounded-lg hover:scale-105 transition-transform duration-300"
+            />: ''
+          }
         </div>
+        </Link>
       ))}
     </div>
     </>

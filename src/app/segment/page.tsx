@@ -1,10 +1,16 @@
 import Segment from '@/components/segment'
+import { fileExists, loadJsonToTensor } from '@/lib';
+import path from 'path';
 import React from 'react'
 
-const page = () => {
+const page = async() => {
+
+
+ 
+  
   return (
     <div>
-      <Segment/>
+      <Segment  />
     </div>
   )
 }
