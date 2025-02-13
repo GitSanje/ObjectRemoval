@@ -5,7 +5,6 @@ function arrayToImageData(input: any, width: number, height: number){
 
     const [r, g, b, a] = [0, 114, 189, 255]; // the masks's blue color
     const arr = new Uint8ClampedArray(4 * width * height).fill(0);
-
     for (let i = 0; i < input.length; i++){
        
            // Threshold the onnx model mask prediction at 0.0
@@ -23,6 +22,8 @@ function arrayToImageData(input: any, width: number, height: number){
     return new ImageData(arr, height, width);
 
 }
+
+
 
 
 // Use a Canvas element to produce an image from ImageData

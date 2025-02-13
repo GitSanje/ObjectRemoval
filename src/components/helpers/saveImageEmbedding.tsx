@@ -1,65 +1,47 @@
 "use client"
 import { saveEmbedding } from "@/lib";
 import { InferenceSession, Tensor } from "onnxruntime-web";
+import { extractImgData } from "./imgUtils";
+
 
 const ImageEmbedding = async (url: URL, model: InferenceSession): Promise<void> => {
-    return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    try {
       const IMAGE_SIZE = 1024;
       const img = new Image();
       img.src = url.href;
-  
-      img.onload = async () => {
-        try {
-          const canvas = document.createElement("canvas");
-          canvas.width = IMAGE_SIZE;
-          canvas.height = IMAGE_SIZE;
-  
-          const ctx = canvas.getContext("2d");
-          if (!ctx) {
-            return reject(new Error("Failed to get 2D context"));
-          }
-  
-          ctx.drawImage(img, 0, 0, IMAGE_SIZE, IMAGE_SIZE);
-  
-          const imageData = ctx.getImageData(0, 0, IMAGE_SIZE, IMAGE_SIZE);
-          const { data } = imageData;
-          const float32Array = convertToChannelFirst(data, IMAGE_SIZE, IMAGE_SIZE);
-  
-          const imgTensor = new Tensor("float32", float32Array, [
-            1,
-            3,
-            IMAGE_SIZE,
-            IMAGE_SIZE,
-          ]);
-  
-          const feeds = { input_image: imgTensor };
-          const results = await model.run(feeds);
-  
-          const embedding = results?.image_embedding;
-          if (!embedding) {
-            return reject(new Error("Model did not return an embedding."));
-          }
-  
-          const tensorJson = {
-            shape: embedding.dims,
-            type: embedding.type,
-            data: embedding.data,
-          };
-  
-          await saveEmbedding(
-            tensorJson,
-            `public/data/images/${getImgName(url)}_onnx_embedding.json`
-          );
-  
-          resolve(); // Mark the promise as resolved
-        } catch (error) {
-          reject(error); // Catch and reject errors
-        }
+
+      // Wait for image data
+      const data = await extractImgData(url, IMAGE_SIZE, IMAGE_SIZE);
+      const float32Array = convertToChannelFirst(data, IMAGE_SIZE, IMAGE_SIZE);
+
+      const imgTensor = new Tensor("float32", float32Array, [1, 3, IMAGE_SIZE, IMAGE_SIZE]);
+      const feeds = { input_image: imgTensor };
+
+      const results = await model.run(feeds);
+      const embedding = results?.image_embedding;
+
+      if (!embedding) {
+        return reject(new Error("Model did not return an embedding."));
+      }
+
+      const tensorJson = {
+        shape: embedding.dims,
+        type: embedding.type,
+        data: embedding.data,
       };
-  
-      img.onerror = () => reject(new Error(`Failed to load image: ${url.href}`));
-    });
-  };
+
+      await saveEmbedding(tensorJson, `public/data/images/${getImgName(url)}_onnx_embedding.json`);
+      resolve();
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+
+
+ 
   
 
 // const convertToChannelFirst = (

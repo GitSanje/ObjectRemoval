@@ -1,6 +1,7 @@
 "use client"
 import React, { createContext } from 'react'
 import { modelInputProps } from '../helpers/Interfaces';
+import { Tensor } from 'onnxruntime-web';
 
 
 interface contextProps {
@@ -18,6 +19,8 @@ interface contextProps {
     ];
     isremove: [isremove : boolean,
       setIsremove: (isremove:boolean) => void];
+      maskoutput: [maskoutput : Tensor|null,
+        setMaskOutput: (maskoutput:Tensor |null) => void];
   }
   
   

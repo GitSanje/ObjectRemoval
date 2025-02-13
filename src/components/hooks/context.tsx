@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { modelInputProps } from "../helpers/Interfaces";
 import AppContext from "./createContext";
+import { Tensor } from "onnxruntime-web";
 
 const AppContextProvider = (props: {
   children: React.ReactElement<any, string | React.JSXElementConstructor<any>>;
@@ -11,6 +12,7 @@ const AppContextProvider = (props: {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [maskImg, setMaskImg] = useState<HTMLImageElement | null>(null);
   const [isremove, setIsremove] = useState<boolean>(false);
+  const [maskoutput, setMaskOutput] = useState<Tensor| null>(null);
 
   return (
     <AppContext.Provider
@@ -18,7 +20,8 @@ const AppContextProvider = (props: {
         clicks: [clicks, setClicks],
         image: [image, setImage],
         maskImg: [maskImg, setMaskImg],
-        isremove: [isremove,setIsremove]
+        isremove: [isremove,setIsremove],
+        maskoutput:[maskoutput,setMaskOutput]
       }}
     >
       {props.children}

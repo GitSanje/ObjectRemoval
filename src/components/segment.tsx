@@ -36,14 +36,17 @@ const Segment = ({
   const [tensor, setTensor] = useState<Tensor | null>(null); // Image embedding tensor
   const [loading, setLoading] = useState(false);
 
-
+  
 
   const {
     clicks: [clicks],
     image: [, setImage],
     maskImg: [, setMaskImg],
+    maskoutput:[maskoutput,setMaskOutput]
   } = useContext(AppContext)!;
 
+  
+  console.log(maskoutput,'maskoutput');
   // Initialize the ONNX model. load the image, and load the SAM
   // pre-computed image embedding
   useEffect(() => {
@@ -122,6 +125,9 @@ const Segment = ({
         img.width = width;
         img.height = height;
         setImage(img);
+        
+        
+        
 
      
       };
@@ -171,6 +177,8 @@ const Segment = ({
         const output = results[model.outputNames[0]];
         // The predicted mask returned from the ONNX model is an array which is
         // rendered as an HTML image using onnxMaskToImage() from maskUtils.tsx.
+     
+        setMaskOutput(output)
         setMaskImg(
           onnxMaskToImage(output.data, output.dims[2], output.dims[3])
         );

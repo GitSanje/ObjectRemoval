@@ -4,6 +4,7 @@ import "./globals.css";
 import AppContextProvider from "@/components/hooks/context";
 import Link from "next/link";
 import { GithubIcon } from "lucide-react";
+import { Toaster } from "@/components/ui/sonner"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,7 +56,7 @@ export default function RootLayout({
         </div>
       </header> 
      
-
+       <Toaster/>
        
         {children}
         
