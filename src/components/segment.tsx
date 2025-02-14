@@ -31,7 +31,7 @@ const Segment = ({
 }) => {
   // The ONNX model expects the input to be rescaled to 1024.
   // The modelScale state variable keeps track of the scale values.
-  const [modelScale, setModelScale] = useState<modelScaleProps | null>(null);
+
   const [model, setModel] = useState<InferenceSession | null>(null); // ONNX model
   const [tensor, setTensor] = useState<Tensor | null>(null); // Image embedding tensor
   const [loading, setLoading] = useState(false);
@@ -40,9 +40,10 @@ const Segment = ({
 
   const {
     clicks: [clicks],
-    image: [, setImage],
+    image: [image, setImage],
     maskImg: [, setMaskImg],
-    maskoutput:[maskoutput,setMaskOutput]
+    maskoutput:[maskoutput,setMaskOutput],
+    modelScale: [modelScale, setModelScale] 
   } = useContext(AppContext)!;
 
   
@@ -109,8 +110,11 @@ const Segment = ({
 
   const loadImage = async (url: URL) => {
     try {
+      if(image && modelScale){
+        return
+      }
       const img = new Image();
-      img.src = url.href;
+      img.src = url.href ;
 
       img.onload = async () => {
         const { height, width, samScale } = handleImageScale(img);
@@ -125,10 +129,6 @@ const Segment = ({
         img.width = width;
         img.height = height;
         setImage(img);
-        
-        
-        
-
      
       };
     } catch (error) {

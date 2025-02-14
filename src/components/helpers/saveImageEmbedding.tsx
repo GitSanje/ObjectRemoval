@@ -12,7 +12,7 @@ const ImageEmbedding = async (url: URL, model: InferenceSession): Promise<void> 
       img.src = url.href;
 
       // Wait for image data
-      const data = await extractImgData(url, IMAGE_SIZE, IMAGE_SIZE);
+      const data = await extractImgData(url, s);
       const float32Array = convertToChannelFirst(data, IMAGE_SIZE, IMAGE_SIZE);
 
       const imgTensor = new Tensor("float32", float32Array, [1, 3, IMAGE_SIZE, IMAGE_SIZE]);

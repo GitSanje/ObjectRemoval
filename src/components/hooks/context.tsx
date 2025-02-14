@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react";
-import { modelInputProps } from "../helpers/Interfaces";
+import { modelInputProps, modelScaleProps } from "../helpers/Interfaces";
 import AppContext from "./createContext";
 import { Tensor } from "onnxruntime-web";
 
@@ -13,7 +13,7 @@ const AppContextProvider = (props: {
   const [maskImg, setMaskImg] = useState<HTMLImageElement | null>(null);
   const [isremove, setIsremove] = useState<boolean>(false);
   const [maskoutput, setMaskOutput] = useState<Tensor| null>(null);
-
+  const [modelScale, setModelScale] = useState<modelScaleProps | null>(null);
   return (
     <AppContext.Provider
       value={{
@@ -21,7 +21,8 @@ const AppContextProvider = (props: {
         image: [image, setImage],
         maskImg: [maskImg, setMaskImg],
         isremove: [isremove,setIsremove],
-        maskoutput:[maskoutput,setMaskOutput]
+        maskoutput:[maskoutput,setMaskOutput],
+          modelScale: [modelScale, setModelScale] 
       }}
     >
       {props.children}

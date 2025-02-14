@@ -20,13 +20,22 @@ import {
   Sparkles,
   Scissors,
   X,
+  VenetianMask,
+  Loader2,
 } from "lucide-react";
 import UploadImage from "./comp/upload-image";
-import { Suspense, useContext, useEffect, useState } from "react";
+import {
+  Suspense,
+  useContext,
+  useEffect,
+  useState,
+  useTransition,
+} from "react";
 import AppContext from "./hooks/createContext";
 import Segment from "./segment";
 
 import { arrayToImageMask } from "./helpers/extractMask";
+import { saveMaskImage } from "./helpers/imgUtils";
 
 export default function Page() {
   const {
@@ -37,6 +46,7 @@ export default function Page() {
     maskoutput: [maskoutput],
   } = useContext(AppContext)!;
 
+  const [isPending, startTransition] = useTransition();
   const [clickedObject, setClickedObject] = useState<string | null>(null);
   const [fname, setFname] = useState<string | null>(null);
 
@@ -58,9 +68,10 @@ export default function Page() {
   console.log(clickedObject, clickedObject === "redo");
 
   const [cutOutImg, setCutOutImg] = useState<string | null>(null);
-
+  const [maskimggray, setMaskImgGray] = useState<string | null>(null);
   const image_path = `/data/images/${fname}`;
   const embed_path = `/data/embeddings/${fname?.split(".")[0]}_embedding.npy`;
+
   const handleRemoveClick = () => {
     setIsremove(true);
 
@@ -89,6 +100,22 @@ export default function Page() {
 
       setCutOutImg(imgMask?.src as string);
     }
+  };
+
+  const handleGenerateMask = async () => {
+    startTransition(async () => {
+      if (!maskoutput) {
+        toast.success("No mask has been created");
+        return;
+      }
+      const response = await saveMaskImage(maskoutput!, fname!);
+      console.log(response);
+      
+      if (response?.success) {
+        toast.success("Mask image has been saved!");
+      }
+      
+    });
   };
 
   return (
@@ -121,6 +148,23 @@ export default function Page() {
             >
               <MousePointer2 className="h-4 w-4 mr-2" />
               Hover & Click
+            </Button>
+
+            <Button
+              variant="secondary"
+              className="w-full justify-start bg-blue-50 hover:bg-blue-100 text-blue-600"
+              onClick={handleGenerateMask}
+            >
+              {isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <VenetianMask
+                  className="h-4 w-4 mr-2"
+                  size={48}
+                  strokeWidth={2}
+                />
+              )}
+              {isPending ? "Generating..." : "Generate Mask"}
             </Button>
             <div className="text-xs text-muted-foreground px-2">
               Click an object one or more times.

@@ -34,7 +34,7 @@ export async function uploadImage(data: FormData) {
      const buffer = Buffer.from(bytes);
 
      
-     const filePath = path.join(publicPath, `${Date.now()}-${file.name}`);
+     const filePath = path.join(publicPath, `${file.name}`);
      await fs.writeFile(filePath, buffer);
     // const blob = await put(file.name, file, {
     //   access: "public",
@@ -42,7 +42,7 @@ export async function uploadImage(data: FormData) {
     // })
 
     revalidatePath("/")
-    return { url: `public/data/${path.basename(filePath)}` };
+    return {success:true, url: `public/data/images/${path.basename(filePath)}` };
   } catch (e) {
     console.error(e)
     return { error: (e as Error).message }
