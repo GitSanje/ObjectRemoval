@@ -64,13 +64,14 @@ export async function SendToInpaint(formData:FormData){
     if(res.ok){
 
     const img = formData.get('image') as File 
-    const fullPath = path.join(ouputDir,img.name)
+    const fname = new Date().getTime()+ '_'+ img.name;
+    const fullPath = path.join(ouputDir,fname)
     
     const imageBlob = await res.blob();
     const arrayBuffer =  Buffer.from(await imageBlob.arrayBuffer())
 
     fs.writeFile(fullPath,arrayBuffer )
-    const imageUrl = `/data/outputs/${img.name}`;
+    const imageUrl = `/data/outputs/${fname}`;
 
 
     return {

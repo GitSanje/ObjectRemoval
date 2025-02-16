@@ -22,6 +22,8 @@ import {
   X,
   VenetianMask,
   Loader2,
+  Circle,
+  PenTool,
 } from "lucide-react";
 import UploadImage from "./comp/upload-image";
 import {
@@ -38,6 +40,7 @@ import { arrayToImageMask } from "./helpers/extractMask";
 import { saveMaskImage } from "./helpers/imgUtils";
 import { SendToInpaint } from "@/actions";
 import { getInpaintImage } from "./helpers/inpaintUtil";
+import DrawMask from "./helpers/drawMask";
 
 export default function Page() {
   const {
@@ -49,9 +52,12 @@ export default function Page() {
   } = useContext(AppContext)!;
 
   const [isPending, startTransition] = useTransition();
+
   const [clickedObject, setClickedObject] = useState<string | null>(null);
   const [fname, setFname] = useState<string | null>(null);
   const [inpaintUrl, setInpaintUrl] = useState<string | null>(null);
+  const [drawMode, setDrawMode] = useState<boolean>(false);
+
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -60,7 +66,6 @@ export default function Page() {
 
   const handleObjectClick = (objId: string) => {
     if (!objId) {
-
       return;
     }
     setClickedObject(objId);
@@ -68,12 +73,10 @@ export default function Page() {
       setClickedObject("");
     }, 150);
   };
-  
 
   const [cutOutImg, setCutOutImg] = useState<string | null>(null);
 
   const image_path = `/data/images/${fname}`;
-
 
   const handleRemoveClick = () => {
     setIsremove(true);
@@ -126,16 +129,26 @@ export default function Page() {
         toast.success("No mask has been created");
         return;
       }
-      if(!image && fname) return;
-      const res = await getInpaintImage(image,maskoutput,fname!)
+      if (!image && fname) return;
+      const res = await getInpaintImage(image, maskoutput, fname!);
       if (res?.success) {
-        setInpaintUrl(res.imageUrl!)
+        setInpaintUrl(res.imageUrl!);
         toast.success("Inpaint image has been generated!");
+   
       }
     });
   };
 
-  
+
+  const handleDrawMode = async() => {
+    setDrawMode(!drawMode)
+    if(!drawMode){
+      toast.success("Switch to painting Mode!")
+    }else{
+      toast.success("Switched off painting Mode!")
+    }
+
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -159,8 +172,6 @@ export default function Page() {
           </div>
 
           <div className="space-y-2">
-           
-
             <Button
               variant="secondary"
               className="w-full justify-start bg-indigo-50 hover:bg-indigo-100 text-indigo-600"
@@ -177,6 +188,22 @@ export default function Page() {
               )}
               {isPending ? "Generating..." : "Generate Mask"}
             </Button>
+
+            <Button
+      variant="secondary"
+      className={`w-full justify-start text-indigo-600 ${drawMode ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-indigo-50 hover:bg-indigo-100'} `}
+      onClick={handleDrawMode}
+    >
+      {/* Conditionally render the icon */}
+      
+  
+      <PenTool  className="h-4 w-4 mr-2" size={48}
+
+      strokeWidth={3}/>
+      
+     { drawMode  ? ' Switch on draw mode': ' Switch off draw mode' }
+     
+    </Button>
             <div className="text-xs text-muted-foreground px-2">
               Click an object one or more times.
               <br />
@@ -282,23 +309,22 @@ export default function Page() {
                 Cut out object
               </Button>
 
-            
               {cutOutImg && (
-                  <div
-                    className="mt-4 transition-all duration-500 transform scale-95  animate-fade-in"
-                    style={{
-                      maxWidth: "100%",
-                      display: "flex",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <img
-                      src={cutOutImg!}
-                      alt="Cut-Out Mask"
-                      className="w-auto h-auto rounded-lg shadow-lg"
-                    />
-                  </div>
-                )}
+                <div
+                  className="mt-4 transition-all duration-500 transform scale-95  animate-fade-in"
+                  style={{
+                    maxWidth: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                  }}
+                >
+                  <img
+                    src={cutOutImg!}
+                    alt="Cut-Out Mask"
+                    className="w-auto h-auto rounded-lg shadow-lg"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -320,37 +346,46 @@ export default function Page() {
 
         {/* Main Content */}
         <main className="flex-1 p-4">
-  <div className="max-w-5xl mx-auto">
-    {fname ? <Segment fname={fname} /> : <UploadImage fromupload={false} />}
+          <div className="max-w-5xl mx-auto">
+            {fname ? (
+              drawMode? <DrawMask imageProp={image!}/>:
+              <Segment fname={fname} />
+            ) : (
+              <UploadImage fromupload={false} />
+            )}
 
-    {/* Centered Button */}
-    <div className="mt-5 flex justify-center">
-      <Button
-        variant="secondary"
-        className="  flex items-center bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-semibold px-4 py-2"
-        onClick={handleInpaint}
-      >
-        
-        
+            {/* Centered Button */}
+            <div className="mt-5 flex justify-center">
+              <Button
+                variant="secondary"
+                className="  flex items-center bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-semibold px-4 py-2"
+                onClick={handleInpaint}
+              >
+                {isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <MousePointer2 className="h-4 w-4 mr-2" />
+                )}
+                {isPending ? "Generating..." : "Inpaint image"}
+              </Button>
+            </div>
 
-        {isPending ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <MousePointer2 className="h-4 w-4 mr-2" />
-              )}
-              {isPending ? "Generating..." : "Inpaint image"}
-      </Button>
-    </div>
-
-    {inpaintUrl && (
-        <div>
-          <h3>Generated Inpainted Image:</h3>
-          <img src={inpaintUrl} alt="Inpainted" />
-        </div>
-      )}
-  </div>
-</main>
-
+            {inpaintUrl && (
+              <div className="mt-5">
+                <h3 className="flex justify-center mb-2 font-semibold text-indigo-700">
+                  Generated Inpainted Image:
+                </h3>
+                <div className="relative w-full h-full max-w-[900px] max-h-[600px] mx-auto">
+                  <img
+                    src={inpaintUrl}
+                    alt="Inpainted"
+                    className="object-contain w-full h-full"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
       </div>
     </div>
   );

@@ -38,6 +38,7 @@ export function extractImgData(url:URL, w?:number, h?:number):Promise<Uint8Clamp
 export function generateMask(mask: Tensor): Promise<Blob> {
   return new Promise((resolve, reject) => {
     try {
+
       const [_, __, height, width] = mask.dims;
       const maskarr = new Uint8ClampedArray(height * width * 4).fill(0);
 
@@ -122,8 +123,23 @@ export async function getImageBlob(imageElement: HTMLImageElement): Promise<Blob
       resolve(blob)
     },'image/png');
 
-
-
-
   })
 }
+
+
+export const convertToChannelFirst = (
+  imageData: Uint8ClampedArray,
+  width: number,
+  height: number
+): Float32Array => {
+  const channels = 3; // RGB
+  const float32Array = new Float32Array(channels * height * width);
+
+  for (let i = 0; i < height * width; i++) {
+    float32Array[i] = imageData[i * 4] / 255;
+    float32Array[i + height * width] = imageData[i * 4 + 1] / 255;
+    float32Array[i + 2 * height * width] = imageData[i * 4 + 2] / 255;
+  }
+
+  return float32Array;
+};

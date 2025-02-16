@@ -1,9 +1,19 @@
 'use client'
-import { useRef, useState, useEffect, ChangeEvent } from "react";
+import { useRef, useState, useEffect, ChangeEvent, useContext } from "react";
+import { Button } from "../ui/button";
+import { convertToChannelFirst } from "./imgUtils";
+import { Tensor } from "onnxruntime-web";
+import AppContext from "../hooks/createContext";
+import { toast } from "sonner";
 
 
-export default function DrawMask() {
-  const [image, setImage] = useState<ArrayBuffer | string | null>(null);
+export default function DrawMask({imageProp}:{
+  imageProp?: HTMLImageElement
+}) {
+
+
+  
+  const [image, setImage] = useState<ArrayBuffer | string | null>(imageProp?.src as string);
   const [brushSize, setBrushSize] = useState<number>(5);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const imgCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -12,6 +22,13 @@ export default function DrawMask() {
   const [scale, setScale] = useState<number>(1);
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
   const [isErasing, setIsErasing] = useState<boolean>(false); 
+
+  const {
+
+    maskoutput: [maskoutput,setMaskOutput],
+  } = useContext(AppContext)!;
+
+
 
 
   // Handle image upload
@@ -33,7 +50,7 @@ export default function DrawMask() {
     if (!image) return;
 
     const img = new Image();
-    img.src = image as string;
+    img.src =  image as string;
 
     img.onload = () => {
       const maxWidth = window.innerWidth * 0.9; // 90% of window width
@@ -96,11 +113,11 @@ export default function DrawMask() {
     const handleResize = () => updateDimensions();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [image]);
+  }, [image,imageProp]);
 
   useEffect(() => {
     updateDimensions();
-  }, [image]);
+  }, [image,imageProp]);
 
   // Drawing functions
   const getScaledCoords = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -169,9 +186,24 @@ export default function DrawMask() {
     link.click();
   };
 
+  const handleFinish = async () => {
+
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d') 
+
+    if (!canvas || !ctx) return;
+    const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+    const float32Array =   convertToChannelFirst(imageData.data,imageData.width,imageData.height);
+
+     const imgTensor = new Tensor("float32", float32Array, [1, 3,imageData.height,imageData.width]);
+
+     setMaskOutput(imgTensor)
+     toast.success("Successfully generated the mask, Now inpaint it!")
+  }
+
   return (
     <div className="flex flex-col items-center space-y-4 p-5 bg-gray-100 min-h-screen">
-      <input type="file" onChange={handleImageUpload} accept="image/*" className="mb-2" />
+     { imageProp ?  '' : <input type="file" onChange={handleImageUpload} accept="image/*" className="mb-2" />} 
 
       <div className="relative" style={{ width: dimensions.width, height: dimensions.height }}>
         <canvas
@@ -214,9 +246,16 @@ export default function DrawMask() {
         >
           {isErasing ? "Switch to Drawing" : "Switch to Erasing"}
         </button>
-        <button onClick={saveImage} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+
+        { imageProp ? 
+        <Button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        onClick={handleFinish}>
+          Finish
+        </Button>: 
+         <button onClick={saveImage} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
           Save Mask
-        </button>
+        </button> }
+        
       </div>
     </div>
   );
