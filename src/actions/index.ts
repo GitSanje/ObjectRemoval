@@ -6,7 +6,7 @@
 import { revalidatePath } from "next/cache"
 import path from "path"
 import fs from "fs/promises";
-import { fileExists } from "@/lib";
+import { ensureDirectory, fileExists } from "@/lib";
 
    
 export async function uploadImage(data: FormData) {
@@ -49,3 +49,44 @@ export async function uploadImage(data: FormData) {
   }
 }
 
+
+
+export async function SendToInpaint(formData:FormData){
+  
+  try {
+  
+    const res = await fetch('http://localhost:8000/inpaint/',{
+      method: "POST",
+      body: formData,
+    })
+    const ouputDir= path.join(process.cwd(),'/public/data/outputs')
+    await ensureDirectory(ouputDir)
+    if(res.ok){
+
+    const img = formData.get('image') as File 
+    const fullPath = path.join(ouputDir,img.name)
+    
+    const imageBlob = await res.blob();
+    const arrayBuffer =  Buffer.from(await imageBlob.arrayBuffer())
+
+    fs.writeFile(fullPath,arrayBuffer )
+    const imageUrl = `/data/outputs/${img.name}`;
+
+
+    return {
+      success: true,
+      message: "Successfully genereted inpaint of image!",
+      imageUrl: imageUrl,
+
+      
+    }; 
+    
+    }
+    
+  } catch (error) {
+    console.log(error);
+    return { success: false, message: "Failed to generate image inpaint!" };
+    
+    
+  }
+}

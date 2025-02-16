@@ -84,12 +84,10 @@ export const loadJsonToTensor = async (
 export const saveImage = async (formData: FormData) => {
   try {
     const image = formData.get("image") as File | null;
-    console.log(formData, image);
 
     if (!image) {
       throw new Error("No image provided.");
     }
-
     // Convert the file into a buffer
     const buffer = Buffer.from(await image.arrayBuffer());
 

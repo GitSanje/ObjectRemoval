@@ -35,7 +35,7 @@ export function extractImgData(url:URL, w?:number, h?:number):Promise<Uint8Clamp
 
 
 
- function generateMask(mask: Tensor): Promise<Blob> {
+export function generateMask(mask: Tensor): Promise<Blob> {
   return new Promise((resolve, reject) => {
     try {
       const [_, __, height, width] = mask.dims;
@@ -89,7 +89,6 @@ export async function saveMaskImage(mask: Tensor, fname:string){
     const maskBlob = await generateMask(mask);
     const formData = new FormData();
     formData.append("image", maskBlob, fullname);
-
     const res=  await saveImage(formData)
     if(res.success){
       return { success: true, message: "Image saved successfully!", path: `/data/masks/$fullname}` }
@@ -102,3 +101,29 @@ export async function saveMaskImage(mask: Tensor, fname:string){
   }
 }
 
+
+
+export async function getImageBlob(imageElement: HTMLImageElement): Promise<Blob | null>{
+
+  return new Promise ((resolve) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = imageElement.naturalWidth;
+    canvas.height = imageElement.naturalHeight;
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+      resolve(null);
+      return;
+    }
+
+    ctx.drawImage(imageElement,0,0);
+
+    canvas.toBlob((blob) => {
+      resolve(blob)
+    },'image/png');
+
+
+
+
+  })
+}

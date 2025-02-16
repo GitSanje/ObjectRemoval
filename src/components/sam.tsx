@@ -36,6 +36,8 @@ import Segment from "./segment";
 
 import { arrayToImageMask } from "./helpers/extractMask";
 import { saveMaskImage } from "./helpers/imgUtils";
+import { SendToInpaint } from "@/actions";
+import { getInpaintImage } from "./helpers/inpaintUtil";
 
 export default function Page() {
   const {
@@ -49,6 +51,7 @@ export default function Page() {
   const [isPending, startTransition] = useTransition();
   const [clickedObject, setClickedObject] = useState<string | null>(null);
   const [fname, setFname] = useState<string | null>(null);
+  const [inpaintUrl, setInpaintUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -57,7 +60,7 @@ export default function Page() {
 
   const handleObjectClick = (objId: string) => {
     if (!objId) {
-      // setClickedObject('');
+
       return;
     }
     setClickedObject(objId);
@@ -65,12 +68,12 @@ export default function Page() {
       setClickedObject("");
     }, 150);
   };
-  console.log(clickedObject, clickedObject === "redo");
+  
 
   const [cutOutImg, setCutOutImg] = useState<string | null>(null);
-  const [maskimggray, setMaskImgGray] = useState<string | null>(null);
+
   const image_path = `/data/images/${fname}`;
-  const embed_path = `/data/embeddings/${fname?.split(".")[0]}_embedding.npy`;
+
 
   const handleRemoveClick = () => {
     setIsremove(true);
@@ -110,13 +113,29 @@ export default function Page() {
       }
       const response = await saveMaskImage(maskoutput!, fname!);
       console.log(response);
-      
+
       if (response?.success) {
         toast.success("Mask image has been saved!");
       }
-      
     });
   };
+
+  const handleInpaint = async () => {
+    startTransition(async () => {
+      if (!maskoutput) {
+        toast.success("No mask has been created");
+        return;
+      }
+      if(!image && fname) return;
+      const res = await getInpaintImage(image,maskoutput,fname!)
+      if (res?.success) {
+        setInpaintUrl(res.imageUrl!)
+        toast.success("Inpaint image has been generated!");
+      }
+    });
+  };
+
+  
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -128,10 +147,8 @@ export default function Page() {
           <div className="space-y-4">
             <h2 className="font-medium">Tools</h2>
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload
-              </Button>
+              {<UploadImage fromupload={true} />}
+
               <Link href={"/gallary"}>
                 <Button variant="outline" className="flex-1">
                   <ImageIcon className="h-4 w-4 mr-2" />
@@ -142,17 +159,11 @@ export default function Page() {
           </div>
 
           <div className="space-y-2">
-            <Button
-              variant="secondary"
-              className="w-full justify-start bg-blue-50 hover:bg-blue-100 text-blue-600"
-            >
-              <MousePointer2 className="h-4 w-4 mr-2" />
-              Hover & Click
-            </Button>
+           
 
             <Button
               variant="secondary"
-              className="w-full justify-start bg-blue-50 hover:bg-blue-100 text-blue-600"
+              className="w-full justify-start bg-indigo-50 hover:bg-indigo-100 text-indigo-600"
               onClick={handleGenerateMask}
             >
               {isPending ? (
@@ -271,23 +282,23 @@ export default function Page() {
                 Cut out object
               </Button>
 
-              {/* Animated Cut-Out Image Display */}
+            
               {cutOutImg && (
-                <div
-                  className="mt-4 transition-all duration-500 transform scale-95  animate-fade-in"
-                  style={{
-                    maxWidth: "100%",
-                    display: "flex",
-                    justifyContent: "center",
-                  }}
-                >
-                  <img
-                    src={cutOutImg!}
-                    alt="Cut-Out Mask"
-                    className="w-auto h-auto rounded-lg shadow-lg"
-                  />
-                </div>
-              )}
+                  <div
+                    className="mt-4 transition-all duration-500 transform scale-95  animate-fade-in"
+                    style={{
+                      maxWidth: "100%",
+                      display: "flex",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <img
+                      src={cutOutImg!}
+                      alt="Cut-Out Mask"
+                      className="w-auto h-auto rounded-lg shadow-lg"
+                    />
+                  </div>
+                )}
             </div>
           </div>
 
@@ -309,25 +320,37 @@ export default function Page() {
 
         {/* Main Content */}
         <main className="flex-1 p-4">
-          <div className="max-w-5xl mx-auto">
-            {/* <Image
-              src="/data/dogs.jpg"
-              alt="Horses running in a field"
-              width={1200}
-              height={800}
-              className="rounded-lg border"
-            /> */}
+  <div className="max-w-5xl mx-auto">
+    {fname ? <Segment fname={fname} /> : <UploadImage fromupload={false} />}
 
-            {fname ? (
-              <Segment
-                IMAGE_PATH={image_path}
-                IMAGE_EMBEDDING={embed_path as string}
-              />
-            ) : (
-              <UploadImage />
-            )}
-          </div>
-        </main>
+    {/* Centered Button */}
+    <div className="mt-5 flex justify-center">
+      <Button
+        variant="secondary"
+        className="  flex items-center bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-semibold px-4 py-2"
+        onClick={handleInpaint}
+      >
+        
+        
+
+        {isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <MousePointer2 className="h-4 w-4 mr-2" />
+              )}
+              {isPending ? "Generating..." : "Inpaint image"}
+      </Button>
+    </div>
+
+    {inpaintUrl && (
+        <div>
+          <h3>Generated Inpainted Image:</h3>
+          <img src={inpaintUrl} alt="Inpainted" />
+        </div>
+      )}
+  </div>
+</main>
+
       </div>
     </div>
   );

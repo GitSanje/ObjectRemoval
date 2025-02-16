@@ -23,10 +23,10 @@ const MODEL_DIR = "data/model/sam_onnx_quantized_example.onnx";
 
 
 const Segment = ({
-  IMAGE_PATH,IMAGE_EMBEDDING
+ fname
 }:{
-  IMAGE_PATH: string,
-  IMAGE_EMBEDDING: string
+  fname: string,
+
 
 }) => {
   // The ONNX model expects the input to be rescaled to 1024.
@@ -35,6 +35,11 @@ const Segment = ({
   const [model, setModel] = useState<InferenceSession | null>(null); // ONNX model
   const [tensor, setTensor] = useState<Tensor | null>(null); // Image embedding tensor
   const [loading, setLoading] = useState(false);
+
+  const IMAGE_PATH= `/data/images/${fname}`
+  const IMAGE_EMBEDDING= `/data/embeddings/${fname.split('.')[0]}_embedding.npy`
+
+  
 
   
 
@@ -47,7 +52,7 @@ const Segment = ({
   } = useContext(AppContext)!;
 
   
-  console.log(maskoutput,'maskoutput');
+
   // Initialize the ONNX model. load the image, and load the SAM
   // pre-computed image embedding
   useEffect(() => {
@@ -59,7 +64,7 @@ const Segment = ({
         const model = await InferenceSession.create(URL);
         setModel(model);
       } catch (e) {
-        console.log(e);
+        (e);
       }
     };
     initModel();
@@ -110,9 +115,9 @@ const Segment = ({
 
   const loadImage = async (url: URL) => {
     try {
-      if(image && modelScale){
-        return
-      }
+      // if(image && modelScale){
+      //   return
+      // }
       const img = new Image();
       img.src = url.href ;
 
@@ -132,7 +137,7 @@ const Segment = ({
      
       };
     } catch (error) {
-      console.log(error);
+      (error);
     }
   };
 
@@ -151,6 +156,8 @@ const Segment = ({
   useEffect(() => {
     runONNX();
   }, [clicks]);
+  console.log(clicks);
+  
 
   const runONNX = async () => {
     try {
@@ -184,7 +191,7 @@ const Segment = ({
         );
       }
     } catch (error) {
-      console.log(error);
+      (error);
     }
   };
 
