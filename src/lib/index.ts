@@ -8,6 +8,7 @@ import path, { join } from "path";
 /* @ts-ignore */
 import * as ort from "onnxruntime-node";
 import { uploadImage } from "@/actions";
+import { ApiResponse } from "@/components/helpers/Interfaces";
 
 export const fileExists = async (pathToFileOrDir: string): Promise<boolean> => {
   try {
@@ -110,36 +111,43 @@ export const saveImage = async (formData: FormData) => {
   }
 };
 
-export const getImageEmbedding = async (formData: FormData) => {
-  try {
+export const getImageEmbedding =  async(formData: FormData):Promise<ApiResponse> => {
 
-    await uploadImage(formData)
+  return new Promise( async(resolve, reject) => {
+    try {
+
+      const res = await uploadImage(formData)
+      if(!res.success) return resolve( { success: false, message: "failed to upload image!" });
+      
+      const uploadRes = await fetch("http://localhost:8000/upload/", {
+        method: "POST",
+        body: formData,
+      });
+  
+      const uploadData = await uploadRes.blob();
+      // const uploadData = await uploadRes.json();
+      // if (!uploadRes.ok || !uploadData.path) {
+      //   throw new Error(uploadData.error || "Failed to upload image");
+      // }
+      const embeddingPath = formData.get('file') as File 
+       const filename = embeddingPath.name.split(".")[0]+"_embedding.npy";
+      // const downloadRes = await fetch(
+      //   `http://localhost:8000/download/${filename}`
+      // );
     
-    const uploadRes = await fetch("http://localhost:8000/upload/", {
-      method: "POST",
-      body: formData,
-    });
+      const fullPath = path.join(
+        process.cwd(),
+        `/public/data/embeddings/${filename}`
+      );
+      const buffer = await uploadData.arrayBuffer();
+  
+      await fs.writeFile(fullPath, Buffer.from(buffer));
 
-    const uploadData = await uploadRes.json();
-    if (!uploadRes.ok || !uploadData.path) {
-      throw new Error(uploadData.error || "Failed to upload image");
+      resolve( { success: true, message: "Extracted embbeding!" });
+    } catch (error) {
+      reject( { success: false, message: error });
     }
-    const embeddingPath = uploadData.path;
-    const filename = embeddingPath.split("/").pop();
-    const downloadRes = await fetch(
-      `http://localhost:8000/download/${filename}`
-    );
 
-    const fullPath = path.join(
-      process.cwd(),
-      `/public/data/embeddings/${filename}`
-    );
-    const buffer = await downloadRes.arrayBuffer();
-
-    await fs.writeFile(fullPath, Buffer.from(buffer));
-
-    return { success: true, message: "Extracted embbeding!" };
-  } catch (error) {
-    return { success: false, message: error };
-  }
+  })
+  
 };

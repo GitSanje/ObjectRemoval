@@ -22,3 +22,10 @@ export interface modeDataProps {
 export interface ToolProps {
   handleMouseMove: (e: any) => void;
 }
+
+export interface ApiResponse<T=undefined> {
+  success: boolean;
+  message: string;
+  data?:T;
+
+}

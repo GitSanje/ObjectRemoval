@@ -41,6 +41,7 @@ import { saveMaskImage } from "./helpers/imgUtils";
 import { SendToInpaint } from "@/actions";
 import { getInpaintImage } from "./helpers/inpaintUtil";
 import DrawMask from "./helpers/drawMask";
+import { LoadingSpinner } from "./ui/loading-sppiner";
 
 export default function Page() {
   const {
@@ -57,6 +58,7 @@ export default function Page() {
   const [fname, setFname] = useState<string | null>(null);
   const [inpaintUrl, setInpaintUrl] = useState<string | null>(null);
   const [drawMode, setDrawMode] = useState<boolean>(false);
+  const [upload, setUpload] = useState<boolean>(false);
 
 
   useEffect(() => {
@@ -160,7 +162,7 @@ export default function Page() {
           <div className="space-y-4">
             <h2 className="font-medium">Tools</h2>
             <div className="flex gap-2">
-              {<UploadImage fromupload={true} />}
+              {<UploadImage fromupload={true}  setUpload={setUpload}/>}
 
               <Link href={"/gallary"}>
                 <Button variant="outline" className="flex-1">
@@ -347,12 +349,19 @@ export default function Page() {
         {/* Main Content */}
         <main className="flex-1 p-4">
           <div className="max-w-5xl mx-auto">
-            {fname ? (
-              drawMode? <DrawMask imageProp={image!}/>:
-              <Segment fname={fname} />
-            ) : (
-              <UploadImage fromupload={false} />
-            )}
+
+          {upload  ?  <LoadingSpinner/> :
+          (fname ? (
+            drawMode? 
+            <DrawMask imageProp={image!}/>:
+            <Segment fname={fname} />
+          ) : (
+            
+            <UploadImage fromupload={false} />
+          ))
+          
+          }
+          
 
             {/* Centered Button */}
             <div className="mt-5 flex justify-center">
