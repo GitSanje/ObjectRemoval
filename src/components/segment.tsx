@@ -23,30 +23,36 @@ const MODEL_DIR = "data/model/sam_onnx_quantized_example.onnx";
 
 
 const Segment = ({
-  IMAGE_PATH,IMAGE_EMBEDDING
+ fname
 }:{
-  IMAGE_PATH: string,
-  IMAGE_EMBEDDING: string
+  fname: string,
+
 
 }) => {
   // The ONNX model expects the input to be rescaled to 1024.
   // The modelScale state variable keeps track of the scale values.
-  const [modelScale, setModelScale] = useState<modelScaleProps | null>(null);
+
   const [model, setModel] = useState<InferenceSession | null>(null); // ONNX model
   const [tensor, setTensor] = useState<Tensor | null>(null); // Image embedding tensor
   const [loading, setLoading] = useState(false);
+
+  const IMAGE_PATH= `/data/images/${fname}`
+  const IMAGE_EMBEDDING= `/data/embeddings/${fname.split('.')[0]}_embedding.npy`
+
+  
 
   
 
   const {
     clicks: [clicks],
-    image: [, setImage],
+    image: [image, setImage],
     maskImg: [, setMaskImg],
-    maskoutput:[maskoutput,setMaskOutput]
+    maskoutput:[maskoutput,setMaskOutput],
+    modelScale: [modelScale, setModelScale] 
   } = useContext(AppContext)!;
 
   
-  console.log(maskoutput,'maskoutput');
+
   // Initialize the ONNX model. load the image, and load the SAM
   // pre-computed image embedding
   useEffect(() => {
@@ -58,7 +64,7 @@ const Segment = ({
         const model = await InferenceSession.create(URL);
         setModel(model);
       } catch (e) {
-        console.log(e);
+        (e);
       }
     };
     initModel();
@@ -109,8 +115,11 @@ const Segment = ({
 
   const loadImage = async (url: URL) => {
     try {
+      // if(image && modelScale){
+      //   return
+      // }
       const img = new Image();
-      img.src = url.href;
+      img.src = url.href ;
 
       img.onload = async () => {
         const { height, width, samScale } = handleImageScale(img);
@@ -125,14 +134,10 @@ const Segment = ({
         img.width = width;
         img.height = height;
         setImage(img);
-        
-        
-        
-
      
       };
     } catch (error) {
-      console.log(error);
+      (error);
     }
   };
 
@@ -151,6 +156,8 @@ const Segment = ({
   useEffect(() => {
     runONNX();
   }, [clicks]);
+  console.log(clicks);
+  
 
   const runONNX = async () => {
     try {
@@ -184,7 +191,7 @@ const Segment = ({
         );
       }
     } catch (error) {
-      console.log(error);
+      (error);
     }
   };
 

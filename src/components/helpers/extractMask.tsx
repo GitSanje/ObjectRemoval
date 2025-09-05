@@ -6,7 +6,7 @@ async function arrayToImageMask(url: URL, mask: Tensor) {
     const data = await extractImgData(url);
     
      const [_, __, height, width] = mask.dims;
-     console.log(mask.dims,data.length,mask.data.length);
+
      
     if (height * width !== mask.data.length) {
       throw new Error("Mask dimensions do not match expected size.");
@@ -41,5 +41,6 @@ async function arrayToImageMask(url: URL, mask: Tensor) {
     console.log(error);
   }
 }
+
 
 export { arrayToImageMask };

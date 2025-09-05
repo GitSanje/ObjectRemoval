@@ -35,11 +35,11 @@ export default function RootLayout({
           <header className="border-b">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold"> Remove defects</h1>
+            <h1 className="text-xl font-bold"> RDFX </h1>
             <p className="text-sm text-muted-foreground"> Powered by AI</p>
           </div>
           <nav className="flex items-center gap-6">
-            <Link href="#" className="text-sm hover:text-primary">
+            <Link href="/mask_create" className="text-sm hover:text-primary">
               Home
             </Link>
            
@@ -48,6 +48,9 @@ export default function RootLayout({
             </Link>
             <Link href="#" className="text-sm hover:text-primary">
               Paper
+            </Link>
+            <Link href="/how-to-use" className="text-sm hover:text-primary">
+              How to use
             </Link>
             <Link href="#" className="hover:text-primary">
               <GithubIcon className="h-5 w-5" />

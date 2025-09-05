@@ -20,13 +20,29 @@ import {
   Sparkles,
   Scissors,
   X,
+  VenetianMask,
+  Loader2,
+  Circle,
+  PenTool,
 } from "lucide-react";
 import UploadImage from "./comp/upload-image";
-import { Suspense, useContext, useEffect, useState } from "react";
+import {
+  Suspense,
+  useContext,
+  useEffect,
+  useState,
+  useTransition,
+} from "react";
 import AppContext from "./hooks/createContext";
 import Segment from "./segment";
 
 import { arrayToImageMask } from "./helpers/extractMask";
+import { saveMaskImage } from "./helpers/imgUtils";
+import { SendToInpaint } from "@/actions";
+import { getInpaintImage } from "./helpers/inpaintUtil";
+import DrawMask from "./helpers/drawMask";
+import { LoadingSpinner } from "./ui/loading-sppiner";
+import MessageCard from "./comp/message-card";
 
 export default function Page() {
   const {
@@ -37,8 +53,21 @@ export default function Page() {
     maskoutput: [maskoutput],
   } = useContext(AppContext)!;
 
+  const [isPending, startTransition] = useTransition();
+
   const [clickedObject, setClickedObject] = useState<string | null>(null);
   const [fname, setFname] = useState<string | null>(null);
+  const [inpaintUrl, setInpaintUrl] = useState<string | null>(null);
+  const [drawMode, setDrawMode] = useState<boolean>(false);
+  const [upload, setUpload] = useState<boolean>(false);
+  const [prompt, setPrompt] = useState<string | null>(null);
+
+
+  console.log(inpaintUrl);
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPrompt(e.target.value);
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -47,7 +76,6 @@ export default function Page() {
 
   const handleObjectClick = (objId: string) => {
     if (!objId) {
-      // setClickedObject('');
       return;
     }
     setClickedObject(objId);
@@ -55,12 +83,11 @@ export default function Page() {
       setClickedObject("");
     }, 150);
   };
-  console.log(clickedObject, clickedObject === "redo");
 
   const [cutOutImg, setCutOutImg] = useState<string | null>(null);
 
   const image_path = `/data/images/${fname}`;
-  const embed_path = `/data/embeddings/${fname?.split(".")[0]}_embedding.npy`;
+
   const handleRemoveClick = () => {
     setIsremove(true);
 
@@ -91,6 +118,55 @@ export default function Page() {
     }
   };
 
+  const handleGenerateMask = async () => {
+    startTransition(async () => {
+      if (!maskoutput) {
+        toast.success("No mask has been created");
+        return;
+      }
+      const response = await saveMaskImage(maskoutput!, fname!);
+      console.log(response);
+
+      if (response?.success) {
+        toast.success("Mask image has been saved!");
+      }
+    });
+  };
+
+  const handleInpaint = async () => {
+    if (!prompt && prompt === "") {
+      toast.success("give any prompt !");
+      return;
+    }
+    startTransition(async () => {
+      // if(drawMode && !maskoutput){
+      //   toast.success("please click on finish before Inpaint");
+      //   return;
+      // }
+      // if (!maskoutput) {
+      //   toast.success("No mask has been created");
+      //   return;
+      // }
+      if (!image && fname) return;
+      const res = await getInpaintImage(image, fname!, maskoutput!, prompt!);
+      console.log(res);
+      
+      if (res?.success) {
+        setInpaintUrl(res.imageUrl!);
+        toast.success("Inpaint image has been generated!");
+      }
+    });
+  };
+
+  const handleDrawMode = async () => {
+    setDrawMode(!drawMode);
+    if (!drawMode) {
+      toast.success("Switch to painting Mode!");
+    } else {
+      toast.success("Switched off painting Mode!");
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -101,10 +177,8 @@ export default function Page() {
           <div className="space-y-4">
             <h2 className="font-medium">Tools</h2>
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload
-              </Button>
+              {<UploadImage fromupload={true} setUpload={setUpload} />}
+
               <Link href={"/gallary"}>
                 <Button variant="outline" className="flex-1">
                   <ImageIcon className="h-4 w-4 mr-2" />
@@ -117,10 +191,35 @@ export default function Page() {
           <div className="space-y-2">
             <Button
               variant="secondary"
-              className="w-full justify-start bg-blue-50 hover:bg-blue-100 text-blue-600"
+              className="w-full justify-start bg-indigo-50 hover:bg-indigo-100 text-indigo-600"
+              onClick={handleGenerateMask}
             >
-              <MousePointer2 className="h-4 w-4 mr-2" />
-              Hover & Click
+              {isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <VenetianMask
+                  className="h-4 w-4 mr-2"
+                  size={48}
+                  strokeWidth={2}
+                />
+              )}
+              {isPending ? "Generating..." : "Generate Mask"}
+            </Button>
+
+            <Button
+              variant="secondary"
+              className={`w-full justify-start text-indigo-600 ${
+                drawMode
+                  ? "bg-red-500 hover:bg-red-600 text-white"
+                  : "bg-indigo-50 hover:bg-indigo-100"
+              } `}
+              onClick={handleDrawMode}
+            >
+              {/* Conditionally render the icon */}
+
+              <PenTool className="h-4 w-4 mr-2" size={48} strokeWidth={3} />
+
+              {drawMode ? " Switch on draw mode" : " Switch off draw mode"}
             </Button>
             <div className="text-xs text-muted-foreground px-2">
               Click an object one or more times.
@@ -212,10 +311,10 @@ export default function Page() {
           <Separator />
 
           <div className="space-y-2">
-            <Button variant="ghost" className="w-full justify-start">
+            {/* <Button variant="ghost" className="w-full justify-start">
               <Copy className="h-4 w-4 mr-2" />
               Multi-mask
-            </Button>
+            </Button> */}
 
             <div className="relative w-full flex flex-col items-center">
               <Button
@@ -227,7 +326,6 @@ export default function Page() {
                 Cut out object
               </Button>
 
-              {/* Animated Cut-Out Image Display */}
               {cutOutImg && (
                 <div
                   className="mt-4 transition-all duration-500 transform scale-95  animate-fade-in"
@@ -249,7 +347,7 @@ export default function Page() {
 
           <Separator />
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Button variant="ghost" className="w-full justify-start">
               <Square className="h-4 w-4 mr-2" />
               Box
@@ -258,7 +356,7 @@ export default function Page() {
               <Sparkles className="h-4 w-4 mr-2" />
               Everything
             </Button>
-          </div>
+          </div> */}
 
           <Separator />
         </div>
@@ -266,21 +364,40 @@ export default function Page() {
         {/* Main Content */}
         <main className="flex-1 p-4">
           <div className="max-w-5xl mx-auto">
-            {/* <Image
-              src="/data/dogs.jpg"
-              alt="Horses running in a field"
-              width={1200}
-              height={800}
-              className="rounded-lg border"
-            /> */}
-
-            {fname ? (
-              <Segment
-                IMAGE_PATH={image_path}
-                IMAGE_EMBEDDING={embed_path as string}
-              />
+            {upload ? (
+              <LoadingSpinner />
+            ) : fname ? (
+              drawMode ? (
+                <DrawMask imageProp={image!} />
+              ) : (
+                <Segment fname={fname} />
+              )
             ) : (
-              <UploadImage />
+              <UploadImage fromupload={false} />
+            )}
+
+            <MessageCard
+              prompt={prompt!}
+              handleSubmit={handleInpaint}
+              handleInputChange={handleInputChange}
+              isPending={isPending}
+            />
+
+            {/* Centered Button */}
+
+            {inpaintUrl && (
+              <div className="mt-5">
+                <h3 className="flex justify-center mb-2 font-semibold text-indigo-700">
+                  Generated Inpainted Image:
+                </h3>
+                <div className="relative w-full h-full max-w-[900px] max-h-[600px] mx-auto">
+                  <img
+                    src={inpaintUrl}
+                    alt="Inpainted"
+                    className="object-contain w-full h-full"
+                  />
+                </div>
+              </div>
             )}
           </div>
         </main>
