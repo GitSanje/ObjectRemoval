@@ -68,8 +68,11 @@ export async function uploadImage(data: FormData):Promise<ApiResponse> {
 export async function SendToInpaint(formData:FormData){
   
   try {
-  
-    const res = await fetch('http://localhost:8000/inpaint/',{
+   
+    let res;
+    const prompt = formData.get('prompt') as string
+ 
+    res = await fetch(`http://localhost:8000/inpaint${prompt?'_prompt':''}/`,{
       method: "POST",
       body: formData,
     })
@@ -105,3 +108,5 @@ export async function SendToInpaint(formData:FormData){
     
   }
 }
+
+

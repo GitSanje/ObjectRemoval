@@ -2,8 +2,7 @@
 import fs, { mkdir, stat } from "fs/promises";
 
 /* @ts-ignore */
-import npyjs from "npyjs";
-import { Tensor } from "onnxruntime-web";
+
 import path, { join } from "path";
 /* @ts-ignore */
 import * as ort from "onnxruntime-node";

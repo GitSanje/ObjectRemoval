@@ -42,6 +42,7 @@ import { SendToInpaint } from "@/actions";
 import { getInpaintImage } from "./helpers/inpaintUtil";
 import DrawMask from "./helpers/drawMask";
 import { LoadingSpinner } from "./ui/loading-sppiner";
+import MessageCard from "./comp/message-card";
 
 export default function Page() {
   const {
@@ -59,7 +60,14 @@ export default function Page() {
   const [inpaintUrl, setInpaintUrl] = useState<string | null>(null);
   const [drawMode, setDrawMode] = useState<boolean>(false);
   const [upload, setUpload] = useState<boolean>(false);
+  const [prompt, setPrompt] = useState<string | null>(null);
 
+
+  console.log(inpaintUrl);
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPrompt(e.target.value);
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -126,31 +134,38 @@ export default function Page() {
   };
 
   const handleInpaint = async () => {
+    if (!prompt && prompt === "") {
+      toast.success("give any prompt !");
+      return;
+    }
     startTransition(async () => {
-      if (!maskoutput) {
-        toast.success("No mask has been created");
-        return;
-      }
+      // if(drawMode && !maskoutput){
+      //   toast.success("please click on finish before Inpaint");
+      //   return;
+      // }
+      // if (!maskoutput) {
+      //   toast.success("No mask has been created");
+      //   return;
+      // }
       if (!image && fname) return;
-      const res = await getInpaintImage(image, maskoutput, fname!);
+      const res = await getInpaintImage(image, fname!, maskoutput!, prompt!);
+      console.log(res);
+      
       if (res?.success) {
         setInpaintUrl(res.imageUrl!);
         toast.success("Inpaint image has been generated!");
-   
       }
     });
   };
 
-
-  const handleDrawMode = async() => {
-    setDrawMode(!drawMode)
-    if(!drawMode){
-      toast.success("Switch to painting Mode!")
-    }else{
-      toast.success("Switched off painting Mode!")
+  const handleDrawMode = async () => {
+    setDrawMode(!drawMode);
+    if (!drawMode) {
+      toast.success("Switch to painting Mode!");
+    } else {
+      toast.success("Switched off painting Mode!");
     }
-
-  }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -162,7 +177,7 @@ export default function Page() {
           <div className="space-y-4">
             <h2 className="font-medium">Tools</h2>
             <div className="flex gap-2">
-              {<UploadImage fromupload={true}  setUpload={setUpload}/>}
+              {<UploadImage fromupload={true} setUpload={setUpload} />}
 
               <Link href={"/gallary"}>
                 <Button variant="outline" className="flex-1">
@@ -192,20 +207,20 @@ export default function Page() {
             </Button>
 
             <Button
-      variant="secondary"
-      className={`w-full justify-start text-indigo-600 ${drawMode ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-indigo-50 hover:bg-indigo-100'} `}
-      onClick={handleDrawMode}
-    >
-      {/* Conditionally render the icon */}
-      
-  
-      <PenTool  className="h-4 w-4 mr-2" size={48}
+              variant="secondary"
+              className={`w-full justify-start text-indigo-600 ${
+                drawMode
+                  ? "bg-red-500 hover:bg-red-600 text-white"
+                  : "bg-indigo-50 hover:bg-indigo-100"
+              } `}
+              onClick={handleDrawMode}
+            >
+              {/* Conditionally render the icon */}
 
-      strokeWidth={3}/>
-      
-     { drawMode  ? ' Switch on draw mode': ' Switch off draw mode' }
-     
-    </Button>
+              <PenTool className="h-4 w-4 mr-2" size={48} strokeWidth={3} />
+
+              {drawMode ? " Switch on draw mode" : " Switch off draw mode"}
+            </Button>
             <div className="text-xs text-muted-foreground px-2">
               Click an object one or more times.
               <br />
@@ -296,10 +311,10 @@ export default function Page() {
           <Separator />
 
           <div className="space-y-2">
-            <Button variant="ghost" className="w-full justify-start">
+            {/* <Button variant="ghost" className="w-full justify-start">
               <Copy className="h-4 w-4 mr-2" />
               Multi-mask
-            </Button>
+            </Button> */}
 
             <div className="relative w-full flex flex-col items-center">
               <Button
@@ -332,7 +347,7 @@ export default function Page() {
 
           <Separator />
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Button variant="ghost" className="w-full justify-start">
               <Square className="h-4 w-4 mr-2" />
               Box
@@ -341,7 +356,7 @@ export default function Page() {
               <Sparkles className="h-4 w-4 mr-2" />
               Everything
             </Button>
-          </div>
+          </div> */}
 
           <Separator />
         </div>
@@ -349,35 +364,26 @@ export default function Page() {
         {/* Main Content */}
         <main className="flex-1 p-4">
           <div className="max-w-5xl mx-auto">
+            {upload ? (
+              <LoadingSpinner />
+            ) : fname ? (
+              drawMode ? (
+                <DrawMask imageProp={image!} />
+              ) : (
+                <Segment fname={fname} />
+              )
+            ) : (
+              <UploadImage fromupload={false} />
+            )}
 
-          {upload  ?  <LoadingSpinner/> :
-          (fname ? (
-            drawMode? 
-            <DrawMask imageProp={image!}/>:
-            <Segment fname={fname} />
-          ) : (
-            
-            <UploadImage fromupload={false} />
-          ))
-          
-          }
-          
+            <MessageCard
+              prompt={prompt!}
+              handleSubmit={handleInpaint}
+              handleInputChange={handleInputChange}
+              isPending={isPending}
+            />
 
             {/* Centered Button */}
-            <div className="mt-5 flex justify-center">
-              <Button
-                variant="secondary"
-                className="  flex items-center bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-semibold px-4 py-2"
-                onClick={handleInpaint}
-              >
-                {isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <MousePointer2 className="h-4 w-4 mr-2" />
-                )}
-                {isPending ? "Generating..." : "Inpaint image"}
-              </Button>
-            </div>
 
             {inpaintUrl && (
               <div className="mt-5">

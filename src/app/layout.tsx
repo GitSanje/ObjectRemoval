@@ -49,6 +49,9 @@ export default function RootLayout({
             <Link href="#" className="text-sm hover:text-primary">
               Paper
             </Link>
+            <Link href="/how-to-use" className="text-sm hover:text-primary">
+              How to use
+            </Link>
             <Link href="#" className="hover:text-primary">
               <GithubIcon className="h-5 w-5" />
             </Link>
